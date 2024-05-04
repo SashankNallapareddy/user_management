@@ -83,12 +83,13 @@ async def test_create_user_invalid_email(async_client):
 
 
 @pytest.mark.asyncio
-async def test_create_user(async_client):
+async def test_create_user(async_client,admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
     data = {"email": "jon.does@example.com",
         "password": "AnotherPassword123!",
         "role" : "ANONYMOUS"}
-    response = await async_client.post("/register/", json=data)
-    assert response.status_code == 200
+    response = await async_client.post("/users/", json=data,headers=headers)
+    assert response.status_code == 201
     assert response.json()["email"] == data["email"]
 
 
@@ -97,7 +98,7 @@ async def test_create_user_github(async_client):
     data = {"email": "jon.does@example.com",
         "password": "AnotherPassword123!",
         "role" : "ANONYMOUS",
-        "github_profile_url": "http://www.github.com/kakashi122"}
+        "github_profile_url": "http://www.github.com/kakashi1231"}
     response = await async_client.post("/register/", json=data)
     assert response.status_code == 200
     assert response.json()["github_profile_url"] == data["github_profile_url"]
@@ -107,7 +108,7 @@ async def test_create_user_linkedin(async_client):
     data = {"email": "jon.doe@example.com",
         "password": "AnotherPassword123!",
         "role" : "ANONYMOUS",
-        "linkedin_profile_url": "http://www.linkedin.com/kakashi122"}
+        "linkedin_profile_url": "http://www.linkedin.com/kakashi1231"}
     response = await async_client.post("/register/", json=data)
     assert response.status_code == 200
     assert response.json()["linkedin_profile_url"] == data["linkedin_profile_url"]
