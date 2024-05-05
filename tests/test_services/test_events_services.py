@@ -69,4 +69,14 @@ async def test_delete_event_valid_data(db_session, event):
     updated_user = await EventService.delete(db_session, event.id)
     assert updated_user
 
+# Test updating a user with valid data
+async def test_count_event_data(db_session):
+    updated_user = await EventService.count(db_session)
+    assert updated_user>=0
+
+# Test updating a user with valid data
+async def test_all_event_data(db_session):
+    updated_user = await EventService.get_all_events(db_session,0,1)
+    assert len(updated_user)>=0
+
 
