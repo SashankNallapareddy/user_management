@@ -86,6 +86,22 @@ async def test_update_user_valid_data(db_session, user):
     assert updated_user is not None
     assert updated_user.email == new_email
 
+# Test updating a user with valid data
+async def test_update_same_email_user_valid_data(db_session, user,verified_user):
+    new_email = "updated_email@example.com"
+    updated_user1 = await UserService.update(db_session, user.id, {"email": new_email})
+    updated_user2 = await UserService.update(db_session, verified_user.id, {"email": new_email})
+    assert updated_user1 is not None
+    assert updated_user1.email == new_email
+    assert updated_user2 is None
+
+# Test updating a user with valid data
+async def test_update_password_user_valid_data(db_session, user,verified_user):
+    password = "Abdc123$"
+    updated_user = await UserService.update(db_session, user.id, {"password": password})
+    assert updated_user is not None
+
+
 # Test updating a user with invalid data
 async def test_update_user_invalid_data(db_session, user):
     updated_user = await UserService.update(db_session, user.id, {"email": "invalidemail"})
@@ -122,6 +138,27 @@ async def test_register_user_with_valid_data(db_session, email_service):
     assert user is not None
     assert user.email == user_data["email"]
 
+# Test registering a user with valid data
+async def test_register_user_with_valid_2_users(db_session, email_service):
+    user_data_1 = {
+        "nickname": generate_nickname(),
+        "email": "register_valid_user1@example.com",
+        "password": "RegisterValid123!",
+        "role": UserRole.ADMIN
+    }
+    user1 = await UserService.register_user(db_session, user_data_1, email_service)
+    user_data_2 = {
+        "nickname": generate_nickname(),
+        "email": "register_valid_user2@example.com",
+        "password": "RegisterValid123!",
+        "role": UserRole.ANONYMOUS
+    }
+    user2 = await UserService.register_user(db_session, user_data_2, email_service)
+    assert user1 is not None
+    assert user1.email == user_data_1["email"]
+    assert user2 is not None
+    assert user2.email == user_data_2["email"]
+
 # Test attempting to register a user with invalid data
 async def test_register_user_with_invalid_data(db_session, email_service):
     user_data = {
@@ -139,6 +176,16 @@ async def test_login_user_successful(db_session, verified_user):
     }
     logged_in_user = await UserService.login_user(db_session, user_data["email"], user_data["password"])
     assert logged_in_user is not None
+
+# Test successful user login
+async def test_login_locked_user_successful(db_session, locked_user):
+    user_data = {
+        "email": locked_user.email,
+        "password": "MySuperPassword$1234",
+    }
+    logged_in_user = await UserService.login_user(db_session, user_data["email"], user_data["password"])
+    assert logged_in_user is None
+
 
 # Test user login with incorrect email
 async def test_login_user_incorrect_email(db_session):
@@ -165,6 +212,13 @@ async def test_reset_password(db_session, user):
     reset_success = await UserService.reset_password(db_session, user.id, new_password)
     assert reset_success is True
 
+# Test resetting a user's password
+async def test_reset_password_invalid(db_session):
+    user_id = "non-existent--event-id"
+    new_password = "NewPassword123!"
+    reset_success = await UserService.reset_password(db_session, user_id, new_password)
+    assert reset_success is False
+
 # Test verifying a user's email
 async def test_verify_email_with_token(db_session, user):
     token = "valid_token_example"  # This should be set in your user setup if it depends on a real token
@@ -173,9 +227,18 @@ async def test_verify_email_with_token(db_session, user):
     result = await UserService.verify_email_with_token(db_session, user.id, token)
     assert result is True
 
+async def test_verify_email_with_invalid_token(db_session, user):
+    token = "invalid_token_example"  # This should be set in your user setup if it depends on a real token
+    reset_success = await UserService.verify_email_with_token(db_session, user.id, token)
+    assert reset_success is False
+
 # Test unlocking a user's account
 async def test_unlock_user_account(db_session, locked_user):
     unlocked = await UserService.unlock_user_account(db_session, locked_user.id)
     assert unlocked, "The account should be unlocked"
     refreshed_user = await UserService.get_by_id(db_session, locked_user.id)
     assert not refreshed_user.is_locked, "The user should no longer be locked"
+
+async def test_unlock_user_account_invalid(db_session, user):
+    unlocked = await UserService.unlock_user_account(db_session, user.id)
+    assert unlocked is False
